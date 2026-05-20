@@ -1,0 +1,22 @@
+services:
+  home-assistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: mentor-ha
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./homeassistant/config:/config
+    environment:
+      - TZ=${USER_TIMEZONE:-America/New_York}
+
+  mentor-core:
+    build:
+      context: ./app
+    container_name: mentor-core
+    restart: unless-stopped
+    ports:
+      - "${TAILSCALE_IP:-127.0.0.1}:8000:8000"
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      - ./app/config:/app/config

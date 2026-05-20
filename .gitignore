@@ -1,0 +1,49 @@
+# --- Secrets and local credentials (never commit) ---
+.env
+.env.*
+!.env.template
+HA_CREDENTIALS.txt
+**/secrets.yaml
+*.pem
+*.key
+id_rsa*
+*.p12
+
+# --- Runtime data and databases ---
+data/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+
+# --- Home Assistant: ignore runtime state; allowlist static config only ---
+homeassistant/config/*
+!homeassistant/config/blueprints/
+!homeassistant/config/blueprints/**
+!homeassistant/config/configuration.yaml
+!homeassistant/config/automations.yaml
+!homeassistant/config/scripts.yaml
+!homeassistant/config/scenes.yaml
+!homeassistant/config/secrets.yaml.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# --- IDE / editor ---
+.cursor/
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db

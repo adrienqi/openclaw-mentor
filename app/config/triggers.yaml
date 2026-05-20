@@ -1,0 +1,16 @@
+rules:
+  - match: { kind: location.enter, entity: gym }
+    reaction: notify
+    message: "At the gym — log your workout?"
+
+  - match: { kind: location.exit, entity: home }
+    reaction: digest
+    template: today_reminders
+
+  - match: { kind: location.enter, entity: work }
+    reaction: notify
+    message: "Arrived at work. Focus mode."
+
+  - match: { kind: reminder.due }
+    reaction: notify
+    message_template: "Reminder: {title}"
