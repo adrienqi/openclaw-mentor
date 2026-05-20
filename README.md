@@ -40,18 +40,18 @@ There are no inbound public webhooks. Telegram uses outbound long-polling; Home 
 ┌─────────────────┐     Tailscale      ┌──────────────────────────────────────────┐
 │  iPhone         │◄──────────────────►│  Hetzner VPS                             │
 │  - Telegram     │                    │                                          │
-│  - HA Companion │                    │  ┌─────────────┐    ┌───────────────┐  │
-└────────┬────────┘                    │  │ mentor-ha   │    │ mentor-core   │  │
-         │                              │  │ (HA, :8123) │    │ Telegram poll │  │
-         │ HTTPS (Telegram cloud)       │  │ host network│    │ FastAPI :8000 │  │
-         └──────────────────────────────┼──►│             │───►│ SQLite memory │  │
-                                        │  └─────────────┘    └───────┬───────┘  │
-                                        │         │ webhook            │          │
-                                        │         └────────────────────┘          │
-                                        │                    │ Anthropic API       │
-                                        └────────────────────┼────────────────────┘
-                                                             ▼
-                                                    Claude Haiku
+│  - HA Companion │                    │  ┌─────────────┐    ┌───────────────┐    │
+└────────┬────────┘                    │  │ mentor-ha   │    │ mentor-core   │    │
+         │                             │  │ (HA, :8123) │    │ Telegram poll │    │
+         │ HTTPS (Telegram cloud)      │  │ host network│    │ FastAPI :8000 │    │
+         └─────────────────────────────┼─►│             │───►│ SQLite memory │    │
+                                       │  └─────────────┘    └───────┬───────┘    │
+                                       │         │ webhook           │            │
+                                       │         └───────────────────┘            │
+                                       │                    │ Anthropic API       │
+                                       └────────────────────┼─────────────────────┘
+                                                            ▼
+                                                   Claude Haiku
 ```
 
 ### Data flows
