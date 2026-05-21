@@ -1,4 +1,12 @@
 rules:
+  - match: { kind: location.enter, entity: betterbodies }
+    reaction: notify
+    message: "At BetterBodies — log your workout?"
+
+  - match: { kind: location.exit, entity: betterbodies }
+    reaction: notify
+    message: "Left BetterBodies — nice work."
+
   - match: { kind: location.enter, entity: gym }
     reaction: notify
     message: "At the gym — log your workout?"

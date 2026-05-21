@@ -15,6 +15,7 @@ from telegram.ext import (
 
 from llm_client import LLMClient
 from memory.repository import MemoryRepository
+from streeteasy.service import StreetEasyService
 
 logger = logging.getLogger(__name__)
 
@@ -152,6 +153,22 @@ class TelegramHandler:
         summary = self.repo.context_summary(max_items=10)
         await update.message.reply_text(summary)
 
+    async def cmd_streeteasy(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+        if not self._authorized(update):
+            return
+        svc = StreetEasyService(self.repo)
+        if context.args and context.args[0].lower() == "poll":
+            await update.message.reply_text("Running StreetEasy poll now…")
+            from triggers.reactions import send_message
+
+            stats = await svc.poll_once(
+                send_telegram=send_message,
+                llm_handler=self.llm.chat,
+            )
+            await update.message.reply_text(f"Poll done: {stats}")
+            return
+        await update.message.reply_text(svc.status_text())
+
     async def handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not self._authorized(update):
             return
@@ -193,5 +210,6 @@ class TelegramHandler:
         self.app.add_handler(CommandHandler("snooze", self.cmd_snooze))
         self.app.add_handler(CommandHandler("timezone", self.cmd_timezone))
         self.app.add_handler(CommandHandler("status", self.cmd_status))
+        self.app.add_handler(CommandHandler("streeteasy", self.cmd_streeteasy))
         self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.handle_message))
         return self.app

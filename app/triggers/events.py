@@ -10,6 +10,7 @@ class TriggerKind(str, Enum):
     LOCATION_ENTER = "location.enter"
     LOCATION_EXIT = "location.exit"
     REMINDER_DUE = "reminder.due"
+    LISTING_NEW = "listing.new"
     CUSTOM = "custom"
 
 

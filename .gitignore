@@ -4,6 +4,7 @@
 !.env.template
 HA_CREDENTIALS.txt
 **/secrets.yaml
+app/config/streeteasy.yaml
 *.pem
 *.key
 id_rsa*

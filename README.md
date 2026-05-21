@@ -550,6 +550,26 @@ Sets new `due_at` and keeps status `active`.
 - Override per user via `/timezone`
 - Stored in `settings.user_timezone` and on reminder rows
 
+### Low-cost focus nudges (no API cost)
+
+If you want a periodic "stay on track" message without LLM usage, enable the focus nudge adapter in `.env`:
+
+```bash
+FOCUS_NUDGE_ENABLED=true
+FOCUS_NUDGE_INTERVAL_MINUTES=120
+FOCUS_NUDGE_START_HOUR=8
+FOCUS_NUDGE_END_HOUR=22
+FOCUS_NUDGE_MAX_PLANS=2
+```
+
+Behavior:
+
+- Sends a brief Telegram check-in with your top `goal` and next `plan` items
+- Runs only during the configured local-hour window (`/timezone` aware)
+- Uses direct Telegram sends (`notify` style), not Anthropic calls
+
+Tip: for effectiveness with low noise, start with every 2 hours and keep only 1 active goal + 2 active plans.
+
 ---
 
 ## Trigger framework
@@ -645,6 +665,34 @@ Credentials created during automated setup may be stored in `HA_CREDENTIALS.txt`
 | Secrets | `.env` and `homeassistant/config/secrets.yaml` not in git |
 
 Rotate `HA_WEBHOOK_SECRET` and `TELEGRAM_BOT_TOKEN` if compromised.
+
+### Secret exposure response
+
+If a token appeared in logs, chat, or screenshots:
+
+1. **Stop leaking:** mentor-core sets `httpx`/`telegram` loggers to `WARNING` and redacts secrets in log lines (`app/logging_config.py`).
+2. **Rotate local secrets:**
+   ```bash
+   chmod +x scripts/rotate-secrets.sh
+   ./scripts/rotate-secrets.sh
+   ```
+3. **Revoke Telegram bot token:** [@BotFather](https://t.me/BotFather) → your bot → **API Token** → **Revoke current token**, then:
+   ```bash
+   NEW_TELEGRAM_BOT_TOKEN='your-new-token' ./scripts/rotate-secrets.sh
+   ```
+4. **Rotate Anthropic key** in [console.anthropic.com](https://console.anthropic.com), then:
+   ```bash
+   NEW_ANTHROPIC_API_KEY='your-new-key' ./scripts/rotate-secrets.sh
+   ```
+5. **Restart and clear container logs** (optional, on server):
+   ```bash
+   docker compose up -d --build mentor-core
+   docker compose restart home-assistant
+   sudo truncate -s 0 "$(docker inspect --format='{{.LogPath}}' mentor-core)"
+   ```
+6. Before git push: `./scripts/verify-no-secrets.sh`
+
+Never commit `.env`, `secrets.yaml`, or `HA_CREDENTIALS.txt`.
 
 ---
 
@@ -801,6 +849,52 @@ DASHBOARD_PIN=your-dashboard-pin
 
 ---
 
+## StreetEasy apartment monitor
+
+Polls StreetEasy’s unofficial GraphQL API (`api-v6.streeteasy.com`) for new rentals matching your filters, dedupes by listing ID, and alerts you on Telegram. Optional LLM-drafted broker emails and SMTP send when a broker address appears in the listing text.
+
+**Important:** StreetEasy does not offer a supported public API. Many VPS/datacenter IPs receive **403 Forbidden** from `api-v6.streeteasy.com`; if polls fail, set `STREETEASY_HTTP_PROXY` in `.env` to a residential proxy, or run `mentor-core` on a network StreetEasy accepts. This uses the same GraphQL surface as the website; respect their terms of use. **Request a tour** on StreetEasy still requires a logged-in browser session—the bot sends the link and a draft message; you tap through to submit the official tour request unless SMTP email succeeds.
+
+### Setup
+
+1. Copy the example config:
+   ```bash
+   cp app/config/streeteasy.yaml.example app/config/streeteasy.yaml
+   ```
+2. Edit `streeteasy.yaml`: set `enabled: true`, neighborhoods, budget, `move_in_by`, and `outreach` contact fields.
+3. Optional: set `STREETEASY_APPLICANT_*` in `.env` instead of yaml.
+4. Rebuild and restart:
+   ```bash
+   docker compose build mentor-core && docker compose up -d mentor-core
+   ```
+
+### Outreach modes
+
+| Mode | Behavior |
+|------|----------|
+| `notify` | Telegram alert with listing summary + URL |
+| `draft` | Alert + LLM-polished inquiry email body (default) |
+| `email` | Send via SMTP when broker email found in listing; otherwise draft + link |
+
+### Telegram
+
+| Command | Description |
+|---------|-------------|
+| `/streeteasy` | Status: enabled, areas, last poll stats, listing counts |
+| `/streeteasy poll` | Run one poll immediately |
+
+New matches also create a **plan** tagged `apartment` / `streeteasy`.
+
+### SMTP (optional, for `email` mode)
+
+Set in `.env`: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`.
+
+### Trigger events
+
+New listings emit `listing.new` (entity = listing id). Add rules in `triggers.yaml` if you want extra reactions.
+
+---
+
 ## Extending the system
 
 ### Add a trigger rule (no Python)
@@ -836,6 +930,7 @@ Restart `mentor-core`.
 # Memory
 goal: ... | plan: ... | fact: ... | remember: ...
 /add goal ... | /list | /show ID | /done ID | /status
+/streeteasy | /streeteasy poll
 
 # Reminders (timed)
 "Remind me tomorrow at 9am to ..."

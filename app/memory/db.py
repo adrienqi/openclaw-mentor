@@ -7,7 +7,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 DB_PATH = Path("/app/data/mentor.sqlite")
-CURRENT_VERSION = 1
+CURRENT_VERSION = 2
 
 _conn: sqlite3.Connection | None = None
 
@@ -66,5 +66,29 @@ def init_db() -> None:
             PRAGMA user_version = 1;
         """)
         db.commit()
+        version = 1
 
-    logger.info("Database at version %d (current: %d)", max(version, CURRENT_VERSION), CURRENT_VERSION)
+    if version < 2:
+        logger.info("Applying migration v2: streeteasy_listings")
+        db.executescript("""
+            CREATE TABLE IF NOT EXISTS streeteasy_listings (
+                listing_id TEXT PRIMARY KEY,
+                street TEXT NOT NULL DEFAULT '',
+                unit TEXT NOT NULL DEFAULT '',
+                price INTEGER,
+                url TEXT NOT NULL DEFAULT '',
+                first_seen_at TEXT NOT NULL,
+                last_seen_at TEXT NOT NULL,
+                outreach_status TEXT NOT NULL DEFAULT 'pending'
+                    CHECK(outreach_status IN ('pending', 'notified', 'drafted', 'emailed',
+                        'email_failed', 'draft_no_email', 'skipped')),
+                outreach_at TEXT,
+                memory_item_id INTEGER REFERENCES memory_items(id),
+                raw_json TEXT NOT NULL DEFAULT '{}'
+            );
+            CREATE INDEX IF NOT EXISTS idx_streeteasy_outreach ON streeteasy_listings(outreach_status);
+            PRAGMA user_version = 2;
+        """)
+        db.commit()
+
+    logger.info("Database at version %d (current: %d)", db.execute("PRAGMA user_version").fetchone()[0], CURRENT_VERSION)

@@ -3,8 +3,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
-import threading
 from pathlib import Path
+
+from logging_config import configure_logging
+
+configure_logging()
 
 import uvicorn
 from fastapi import FastAPI
@@ -17,14 +20,12 @@ from memory.repository import MemoryRepository
 from telegram_handler import TelegramHandler
 from triggers import TriggerRouter
 from triggers.adapters import set_router_instance
+from triggers.adapters.focus_nudge import focus_nudge_loop
 from triggers.adapters.ha_location import router as ha_router
 from triggers.adapters.schedule import schedule_loop
+from triggers.adapters.streeteasy_poll import streeteasy_poll_loop
 from triggers.reactions import ask_llm, configure, digest, notify
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-)
 logger = logging.getLogger(__name__)
 
 
@@ -101,6 +102,8 @@ async def main() -> None:
         tasks = [
             asyncio.create_task(run_webhook_server(fastapi_app)),
             asyncio.create_task(schedule_loop(repo)),
+            asyncio.create_task(focus_nudge_loop(repo)),
+            asyncio.create_task(streeteasy_poll_loop(repo, llm_handler=llm.chat)),
         ]
 
         try:

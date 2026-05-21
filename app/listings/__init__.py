@@ -1,0 +1,1 @@
+"""Persisted StreetEasy listing state."""

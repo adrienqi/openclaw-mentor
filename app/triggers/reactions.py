@@ -22,6 +22,13 @@ def configure(bot: Bot, chat_id: str, llm_handler: Any = None) -> None:
     _llm_handler = llm_handler
 
 
+async def send_message(text: str) -> None:
+    """Send a plain Telegram message (used by adapters)."""
+    if not _bot:
+        return
+    await _bot.send_message(chat_id=_chat_id, text=text)
+
+
 async def notify(event: TriggerEvent, params: dict[str, Any]) -> None:
     if not _bot:
         return

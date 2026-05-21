@@ -1,1 +1,25 @@
-[]
+- id: mentor_betterbodies_enter
+  alias: Mentor - BetterBodies enter
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.iphone16pro
+      zone: zone.betterbodies
+      event: enter
+  action:
+    - service: rest_command.mentor_location
+      data:
+        event: enter
+        zone: betterbodies
+
+- id: mentor_betterbodies_exit
+  alias: Mentor - BetterBodies exit
+  trigger:
+    - platform: zone
+      entity_id: device_tracker.iphone16pro
+      zone: zone.betterbodies
+      event: leave
+  action:
+    - service: rest_command.mentor_location
+      data:
+        event: exit
+        zone: betterbodies

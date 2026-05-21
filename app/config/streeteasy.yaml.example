@@ -1,0 +1,49 @@
+# Copy to streeteasy.yaml and customize. Never commit streeteasy.yaml (secrets).
+#
+# Uses StreetEasy's unofficial GraphQL API (api-v6.streeteasy.com).
+# Tour requests on streeteasy.com still require you to be logged in in a browser;
+# this integration alerts you, drafts outreach, and can email brokers when an
+# address is found in the listing text.
+
+enabled: false
+poll_interval_minutes: 15
+
+# notify = Telegram alert only
+# draft  = alert + LLM-polished inquiry (default)
+# email  = send SMTP email when broker address found in listing; else draft + link
+outreach_mode: draft
+
+search:
+  areas:
+    - WILLIAMSBURG
+    - GREENPOINT
+    # - 302   # numeric codes also work
+  price_min: 2500
+  price_max: 4500
+  bedrooms_min: 1
+  bedrooms_max: 2
+  no_fee_only: false
+  pets_allowed: true
+  amenities:
+    - WASHER_DRYER
+    - ELEVATOR
+  optional_amenities: []
+  per_page: 50
+  sort_attribute: RECOMMENDED
+  sort_direction: DESCENDING
+
+match:
+  move_in_by: "2026-08-15"
+  exclude_furnished: true
+  require_amenities_match: false
+
+outreach:
+  applicant_name: "Your Name"
+  applicant_email: "you@example.com"
+  applicant_phone: "+1-555-555-5555"
+  move_in_dates:
+    - "2026-08-01"
+    - "2026-08-15"
+  income_note: "Annual income $X; excellent credit; application packet ready."
+  tour_request: true
+  custom_intro: ""
